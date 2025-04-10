@@ -198,7 +198,7 @@ async function processRegistration() {
         console.log("Localisation récupérée :", latitude, longitude);
         pendingDriver.location = [latitude, longitude];
 
-        // Recentrage de la carte sur la position réelle avec un zoom adapté
+        // Recentrage de la carte sur la position réelle avec un zoom de 15
         if (map && typeof map.setView === 'function') {
           map.setView([latitude, longitude], 15);
         }
@@ -265,6 +265,7 @@ function confirmPayment() {
   saveToLocalStorage();
   updateDriversList();
   updateDashboard();
+  // Fermer la modal de paiement et masquer le QR code
   closeModal('paymentModal');
   showToast("Inscription réussie !");
 }
