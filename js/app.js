@@ -195,7 +195,13 @@ async function processRegistration() {
       async (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
+        console.log("Localisation récupérée :", latitude, longitude);
         pendingDriver.location = [latitude, longitude];
+
+        // Recentrage de la carte sur la position réelle avec un zoom adapté
+        if (map && typeof map.setView === 'function') {
+          map.setView([latitude, longitude], 15);
+        }
 
         if (file) {
           pendingDriver.photo = URL.createObjectURL(file);
