@@ -74,7 +74,7 @@ function updatePagination(totalItems) {
   const paginationContainer = document.getElementById('pagination');
   paginationContainer.innerHTML = "";
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
+
   const prevBtn = document.createElement("button");
   prevBtn.textContent = "Précédent";
   prevBtn.disabled = currentPage === 1;
@@ -85,11 +85,11 @@ function updatePagination(totalItems) {
     }
   };
   paginationContainer.appendChild(prevBtn);
-  
+
   const pageInfo = document.createElement("span");
   pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
   paginationContainer.appendChild(pageInfo);
-  
+
   const nextBtn = document.createElement("button");
   nextBtn.textContent = "Suivant";
   nextBtn.disabled = currentPage === totalPages;
@@ -111,7 +111,7 @@ function updateDriversList(filter = '') {
   const filtered = activeDrivers.filter(driver =>
     driver.name.toLowerCase().includes(filter.toLowerCase())
   );
-  
+
   // Pagination
   const totalItems = filtered.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -119,7 +119,7 @@ function updateDriversList(filter = '') {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedDrivers = filtered.slice(startIndex, endIndex);
-  
+
   const html = paginatedDrivers.map((driver, index) => `
     <div class="driver-card" style="animation-delay: ${index * 0.1}s">
       <button class="delete-btn" onclick="deleteDriver(${driver.id})">✕</button>
@@ -132,7 +132,7 @@ function updateDriversList(filter = '') {
       <p>Abonnement actif jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}</p>
     </div>
   `).join("");
-  
+
   document.getElementById('driversList').innerHTML = html;
   updatePagination(filtered.length);
   plotDriversOnMap();
@@ -180,13 +180,13 @@ async function processRegistration() {
     vehicle: document.getElementById('driverVehicle').value.trim(),
     price: document.getElementById('driverPrice').value.trim(),
     phone: document.getElementById('driverPhone').value.trim(),
-    rating: 5 // Par défaut à 5 étoiles
+    rating: 5
   };
   if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone) {
     alert("Veuillez remplir tous les champs.");
     return;
   }
-  
+
   const fileInput = document.getElementById('driverPhoto');
   const file = fileInput && fileInput.files[0];
 
@@ -197,7 +197,6 @@ async function processRegistration() {
         const longitude = position.coords.longitude;
         pendingDriver.location = [latitude, longitude];
 
-        // Gestion de l'image de profil
         if (file) {
           pendingDriver.photo = URL.createObjectURL(file);
         } else {
