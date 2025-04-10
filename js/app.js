@@ -123,7 +123,7 @@ function updateDriversList(filter = '') {
   const html = paginatedDrivers.map((driver, index) => `
     <div class="driver-card" style="animation-delay: ${index * 0.1}s">
       <button class="delete-btn" onclick="deleteDriver(${driver.id})">✕</button>
-      <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo" />
+      <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo-preview" />
       <h3><i class="fa-solid fa-box icon"></i> ${driver.name}</h3>
       <p><i class="fa-solid fa-truck icon"></i> ${driver.vehicle} • ${driver.price} FCFA</p>
       <p><i class="fa-solid fa-phone icon"></i> ${driver.phone}</p>
@@ -145,7 +145,7 @@ function updateDashboard(filter = '') {
   const html = filtered.map(driver => `
     <div class="dashboard-item">
       <div>
-        <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo" style="width:30px;height:30px;border-radius:50%;vertical-align:middle;">
+        <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo-preview" style="width:30px;height:30px;border-radius:50%;vertical-align:middle;">
         <strong>${driver.name}</strong> - ${driver.vehicle} - ${driver.phone}<br>
         Abonné jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}
       </div>
@@ -168,7 +168,7 @@ function deleteDriver(id) {
    Inscription et géolocalisation réelle via API Geolocation
 --------------------- */
 async function processRegistration() {
-  // Vérification de la connexion sécurisée pour la géolocalisation
+  // Vérification de la connexion sécurisée (HTTPS) ou localhost
   if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
     alert("La géolocalisation nécessite une connexion sécurisée (HTTPS).");
     return;
@@ -186,27 +186,23 @@ async function processRegistration() {
     return;
   }
   
-  // Récupération de l'image de profil (optionnel)
   const fileInput = document.getElementById('driverPhoto');
   const file = fileInput && fileInput.files[0];
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        // Active la haute précision pour obtenir une position précise
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         pendingDriver.location = [latitude, longitude];
 
-        // Si un fichier est sélectionné, utiliser URL.createObjectURL() pour générer une URL temporaire
+        // Si un fichier est sélectionné, générer une URL temporaire
         if (file) {
           pendingDriver.photo = URL.createObjectURL(file);
         } else {
-          // Image par défaut si aucune image n'est fournie
           pendingDriver.photo = 'https://via.placeholder.com/150';
         }
 
-        // Définir la date d'expiration à un mois à partir de maintenant
         const expiration = new Date();
         expiration.setMonth(expiration.getMonth() + 1);
         pendingDriver.expirationDate = expiration.toISOString();
