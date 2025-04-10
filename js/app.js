@@ -30,17 +30,6 @@ function initMap() {
 }
 
 /* ---------------------
-   Simulation d'upload (remplacer par Cloudinary si besoin)
---------------------- */
-async function uploadToCloudinary() {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve('https://via.placeholder.com/150');
-    }, 1000);
-  });
-}
-
-/* ---------------------
    Modales
 --------------------- */
 function showModal(modalId) {
@@ -134,6 +123,7 @@ function updateDriversList(filter = '') {
   const html = paginatedDrivers.map((driver, index) => `
     <div class="driver-card" style="animation-delay: ${index * 0.1}s">
       <button class="delete-btn" onclick="deleteDriver(${driver.id})">✕</button>
+      <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo" />
       <h3><i class="fa-solid fa-box icon"></i> ${driver.name}</h3>
       <p><i class="fa-solid fa-truck icon"></i> ${driver.vehicle} • ${driver.price} FCFA</p>
       <p><i class="fa-solid fa-phone icon"></i> ${driver.phone}</p>
@@ -155,6 +145,7 @@ function updateDashboard(filter = '') {
   const html = filtered.map(driver => `
     <div class="dashboard-item">
       <div>
+        <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo" style="width:30px;height:30px;border-radius:50%;vertical-align:middle;">
         <strong>${driver.name}</strong> - ${driver.vehicle} - ${driver.phone}<br>
         Abonné jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}
       </div>
@@ -164,7 +155,7 @@ function updateDashboard(filter = '') {
   document.getElementById('dashboardList').innerHTML = html;
 }
 function deleteDriver(id) {
-  if(confirm("Êtes-vous sûr de vouloir supprimer ce livreur ?")) {
+  if (confirm("Êtes-vous sûr de vouloir supprimer ce livreur ?")) {
     drivers = drivers.filter(driver => driver.id !== id);
     saveToLocalStorage();
     updateDriversList();
@@ -195,22 +186,33 @@ async function processRegistration() {
     return;
   }
   
+  // Récupération de l'image de profil (optionnel)
+  const fileInput = document.getElementById('driverPhoto');
+  const file = fileInput && fileInput.files[0];
+
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
+        // Active la haute précision pour obtenir une position précise
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
         pendingDriver.location = [latitude, longitude];
 
-        const photoUrl = await uploadToCloudinary();
-        if (photoUrl) {
-          pendingDriver.photo = photoUrl;
-          const expiration = new Date();
-          expiration.setMonth(expiration.getMonth() + 1);
-          pendingDriver.expirationDate = expiration.toISOString();
-          closeModal('registrationModal');
-          showModal('paymentModal');
+        // Si un fichier est sélectionné, utiliser URL.createObjectURL() pour générer une URL temporaire
+        if (file) {
+          pendingDriver.photo = URL.createObjectURL(file);
+        } else {
+          // Image par défaut si aucune image n'est fournie
+          pendingDriver.photo = 'https://via.placeholder.com/150';
         }
+
+        // Définir la date d'expiration à un mois à partir de maintenant
+        const expiration = new Date();
+        expiration.setMonth(expiration.getMonth() + 1);
+        pendingDriver.expirationDate = expiration.toISOString();
+
+        closeModal('registrationModal');
+        showModal('paymentModal');
       },
       (error) => {
         console.error("Erreur lors de la récupération de la position GPS :", error);
@@ -230,7 +232,7 @@ async function processRegistration() {
         }
         alert(message);
       },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
   } else {
     alert("La géolocalisation n'est pas supportée par votre navigateur.");
@@ -274,7 +276,12 @@ function plotDriversOnMap() {
   drivers.forEach(driver => {
     if (new Date(driver.expirationDate) > new Date() && driver.location) {
       const marker = L.marker(driver.location).addTo(map)
-        .bindPopup(`<strong>${driver.name}</strong><br><i class="fa-solid fa-truck"></i> ${driver.vehicle}<br><i class="fa-solid fa-phone"></i> ${driver.phone}`);
+        .bindPopup(`
+          <strong>${driver.name}</strong><br>
+          <img src="${driver.photo}" alt="Photo ${driver.name}" style="width:50px;height:50px;border-radius:50%;"><br>
+          <i class="fa-solid fa-truck"></i> ${driver.vehicle}<br>
+          <i class="fa-solid fa-phone"></i> ${driver.phone}
+        `);
       markers.push(marker);
     }
   });
