@@ -82,15 +82,17 @@
         <!-- Champ de fichier pour l'image de profil -->
         <label for="driverPhoto">Photo de profil (optionnelle) :</label>
         <input type="file" id="driverPhoto" accept="image/*" />
-        <!-- Zone de prévisualisation (affichée en dessous du champ, sans masquer le bouton) -->
-        <img id="photoPreview" class="profile-photo-preview" src="#" alt="Prévisualisation de la photo" style="display: none;" />
+        <!-- Conteneur pour la prévisualisation -->
+        <div class="preview-container">
+          <img id="photoPreview" class="profile-photo-preview" src="#" alt="Prévisualisation de la photo" style="display: none;" />
+        </div>
         <!-- Bouton d'inscription -->
         <button type="submit" class="action-btn">S'inscrire et Payer</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal de paiement (QR Code + montant) -->
+  <!-- Modal de paiement -->
   <div id="paymentModal" class="modal" role="dialog" aria-modal="true">
     <div class="modal-content animate-modal payment-content">
       <span class="close-modal" onclick="closeModal('paymentModal')" aria-label="Fermer">&times;</span>
