@@ -58,7 +58,7 @@
     <div class="btn-container">
       <button onclick="showModal('registrationModal')" class="action-btn">Devenir Livreur</button>
     </div>
-    <!-- Carte interactive affichant les positions réelles des livreurs -->
+    <!-- Conteneur de la carte -->
     <div id="mapContainer" class="map-container"></div>
   </section>
 
@@ -83,6 +83,8 @@
         <!-- Champ de fichier pour l'image de profil -->
         <label for="driverPhoto">Photo de profil (optionnelle) :</label>
         <input type="file" id="driverPhoto" accept="image/*" />
+        <!-- Zone de prévisualisation de la photo de profil -->
+        <img id="photoPreview" class="profile-photo-preview" src="#" alt="Prévisualisation de la photo" style="display: none;" />
         <button type="submit" class="action-btn">S'inscrire et Payer</button>
       </form>
     </div>
@@ -105,5 +107,27 @@
   <!-- Leaflet JS pour la carte -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="js/app.js"></script>
+  <!-- Script de prévisualisation de photo -->
+  <script>
+    const photoInput = document.getElementById('driverPhoto');
+    const photoPreview = document.getElementById('photoPreview');
+
+    if (photoInput) {
+      photoInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            photoPreview.src = e.target.result;
+            photoPreview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          photoPreview.src = '#';
+          photoPreview.style.display = 'none';
+        }
+      });
+    }
+  </script>
 </body>
 </html>
