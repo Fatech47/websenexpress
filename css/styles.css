@@ -371,7 +371,7 @@ input[type="file"] {
   border-radius: 5px;
 }
 
-/* Style pour le label du champ fichier */
+/* Label pour le champ fichier */
 .modal-content label[for="driverPhoto"] {
   display: block;
   text-align: left;
