@@ -333,7 +333,7 @@ input[type="text"] {
 
 /* Modal de paiement spécifique */
 .payment-content .qr {
-  width: 150px; /* Taille moyenne */
+  width: 150px;
   height: 150px;
   margin-bottom: 15px;
 }
@@ -352,12 +352,22 @@ input[type="text"] {
 /* Champs de formulaire */
 input[type="text"],
 input[type="number"],
-input[type="tel"] {
+input[type="tel"],
+input[type="file"] {
   width: 100%;
   padding: 10px;
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 5px;
+}
+
+/* Style pour le label du champ fichier */
+.modal-content label[for="driverPhoto"] {
+  display: block;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--text-color);
+  margin-top: 10px;
 }
 
 /* Mode sombre */
