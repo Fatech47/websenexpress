@@ -177,45 +177,63 @@ function deleteDriver(id) {
    Inscription et géolocalisation réelle via API Geolocation
 --------------------- */
 async function processRegistration() {
-  try {
-    pendingDriver = {
-      name: document.getElementById('driverName').value.trim(),
-      vehicle: document.getElementById('driverVehicle').value.trim(),
-      price: document.getElementById('driverPrice').value.trim(),
-      phone: document.getElementById('driverPhone').value.trim(),
-      rating: 5 // Par défaut 5 étoiles, modifiable selon votre logique
-    };
-    if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone) {
-      alert("Veuillez remplir tous les champs.");
-      return;
-    }
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const latitude = position.coords.latitude;
-          const longitude = position.coords.longitude;
-          pendingDriver.location = [latitude, longitude];
-          const photoUrl = await uploadToCloudinary();
-          if (photoUrl) {
-            pendingDriver.photo = photoUrl;
-            const expiration = new Date();
-            expiration.setMonth(expiration.getMonth() + 1);
-            pendingDriver.expirationDate = expiration.toISOString();
-            closeModal('registrationModal');
-            showModal('paymentModal');
-          }
-        },
-        (error) => {
-          console.error("Erreur lors de la récupération de la position GPS :", error);
-          alert("Impossible de récupérer votre position. Vérifiez vos paramètres de géolocalisation.");
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      alert("La géolocalisation n'est pas supportée par votre navigateur.");
-    }
-  } catch (error) {
-    console.error("Erreur d'inscription :", error);
+  // Vérification de la connexion sécurisée pour la géolocalisation
+  if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+    alert("La géolocalisation nécessite une connexion sécurisée (HTTPS).");
+    return;
+  }
+
+  pendingDriver = {
+    name: document.getElementById('driverName').value.trim(),
+    vehicle: document.getElementById('driverVehicle').value.trim(),
+    price: document.getElementById('driverPrice').value.trim(),
+    phone: document.getElementById('driverPhone').value.trim(),
+    rating: 5 // Par défaut à 5 étoiles
+  };
+  if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone) {
+    alert("Veuillez remplir tous les champs.");
+    return;
+  }
+  
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        pendingDriver.location = [latitude, longitude];
+
+        const photoUrl = await uploadToCloudinary();
+        if (photoUrl) {
+          pendingDriver.photo = photoUrl;
+          const expiration = new Date();
+          expiration.setMonth(expiration.getMonth() + 1);
+          pendingDriver.expirationDate = expiration.toISOString();
+          closeModal('registrationModal');
+          showModal('paymentModal');
+        }
+      },
+      (error) => {
+        console.error("Erreur lors de la récupération de la position GPS :", error);
+        let message;
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            message = "Accès à la géolocalisation refusé. Veuillez autoriser l'accès à votre position dans votre navigateur.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            message = "Position non disponible. Veuillez vérifier vos paramètres GPS.";
+            break;
+          case error.TIMEOUT:
+            message = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+            break;
+          default:
+            message = "Erreur inconnue lors de la récupération de la position.";
+        }
+        alert(message);
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+    );
+  } else {
+    alert("La géolocalisation n'est pas supportée par votre navigateur.");
   }
 }
 
