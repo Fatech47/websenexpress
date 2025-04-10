@@ -290,6 +290,16 @@ input[type="text"] {
   border-radius: 10px;
 }
 
+/* Prévisualisation de la photo de profil */
+.profile-photo-preview {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 10px auto;
+}
+
 /* Modales avec animation scale */
 .modal {
   display: none;
