@@ -154,6 +154,7 @@ function updateDashboard(filter = '') {
   `).join("");
   document.getElementById('dashboardList').innerHTML = html;
 }
+
 function deleteDriver(id) {
   if (confirm("Êtes-vous sûr de vouloir supprimer ce livreur ?")) {
     drivers = drivers.filter(driver => driver.id !== id);
@@ -196,7 +197,7 @@ async function processRegistration() {
         const longitude = position.coords.longitude;
         pendingDriver.location = [latitude, longitude];
 
-        // Si un fichier est sélectionné, générer une URL temporaire
+        // Gestion de l'image de profil
         if (file) {
           pendingDriver.photo = URL.createObjectURL(file);
         } else {
