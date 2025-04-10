@@ -11,8 +11,6 @@
   <!-- FontAwesome pour les icônes -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
         integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <!-- (Optionnel) Widget Cloudinary pour l’upload -->
-  <script src="https://upload-widget.cloudinary.com/global/all.js"></script>
 </head>
 <body>
   <!-- Toast de confirmation -->
@@ -82,6 +80,9 @@
         <input type="text" id="driverVehicle" placeholder="Véhicule" required />
         <input type="number" id="driverPrice" placeholder="Prix (FCFA)" required />
         <input type="tel" id="driverPhone" placeholder="Téléphone" required />
+        <!-- Champ de fichier pour l'image de profil -->
+        <label for="driverPhoto">Photo de profil (optionnelle) :</label>
+        <input type="file" id="driverPhoto" accept="image/*" />
         <button type="submit" class="action-btn">S'inscrire et Payer</button>
       </form>
     </div>
