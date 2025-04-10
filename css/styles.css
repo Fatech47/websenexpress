@@ -1,0 +1,398 @@
+/* Variables de base */
+:root {
+  --primary: #2c3e50;
+  --secondary: #3498db;
+  --background: #f8f9fa;
+  --text-color: #333;
+  --dark-background: #1c1c1c;
+  --dark-text: #eaeaea;
+  --success: #27ae60;
+  --danger: #e74c3c;
+}
+
+/* Reset et styles globaux */
+* {
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--background);
+  color: var(--text-color);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* Toast */
+.toast {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--success);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 2100;
+}
+
+/* En-tête */
+.header-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+}
+.logo {
+  height: 200px;
+  transition: transform 0.3s;
+}
+.logo:hover {
+  transform: scale(1.05);
+}
+
+/* Navigation */
+.sticky-nav {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 10px 20px;
+  border-bottom: 1px solid #ddd;
+  z-index: 500;
+}
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 15px;
+  margin: 0;
+  padding: 0;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--primary);
+  font-weight: bold;
+}
+.nav-links a:hover {
+  color: var(--secondary);
+}
+
+/* Section Hero */
+.hero-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+  position: relative;
+  overflow: hidden;
+}
+.hero-section::before {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: -20%;
+  width: 140%;
+  height: 140%;
+  background: url('https://source.unsplash.com/1600x900/?delivery') center/cover no-repeat;
+  opacity: 0.2;
+  filter: blur(10px);
+  animation: zoom 20s infinite alternate;
+}
+@keyframes zoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+.hero-content {
+  position: relative;
+  text-align: center;
+  z-index: 10;
+  animation: fadeIn 2s ease-out;
+}
+.hero-content h2 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+  color: #fff;
+}
+.hero-content p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #fff;
+}
+.hero-content button {
+  background: var(--primary);
+  border: none;
+  padding: 12px 30px;
+  font-size: 1rem;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.hero-content button:active {
+  transform: scale(0.98);
+}
+.hero-content button:hover {
+  background: var(--secondary);
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Sections Livreurs et Dashboard */
+section {
+  padding: 40px 20px;
+  text-align: center;
+}
+section h2 {
+  margin-bottom: 20px;
+  font-size: 2rem;
+}
+input[type="text"] {
+  padding: 10px;
+  width: 80%;
+  max-width: 400px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Boutons génériques */
+.action-btn {
+  background: var(--secondary);
+  color: #fff;
+  padding: 10px 20px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+.action-btn:active {
+  transform: scale(0.95);
+}
+.action-btn:hover {
+  background: var(--primary);
+}
+
+/* Liste des livreurs */
+.drivers-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 40px;
+}
+.driver-card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  position: relative;
+  opacity: 0;
+  animation: slideUp 0.5s forwards;
+}
+.driver-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 10px rgba(0,0,0,0.15);
+}
+.driver-card h3 {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+.driver-card p {
+  margin: 6px 0;
+  font-size: 0.95rem;
+}
+/* Icônes dans la carte du livreur */
+.driver-card .icon {
+  margin-right: 5px;
+  color: var(--secondary);
+}
+.rating {
+  color: #f1c40f;
+  font-size: 0.9rem;
+}
+/* Bouton de suppression */
+.delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.delete-btn:hover {
+  background: darkred;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.pagination button {
+  background: var(--secondary);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.pagination button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Tableau de bord */
+.dashboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+.dashboard-item {
+  background: #fff;
+  border-left: 5px solid var(--secondary);
+  padding: 15px;
+  border-radius: 5px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dashboard-item span {
+  font-size: 0.9rem;
+}
+
+/* Carte de la localisation */
+.map-container {
+  width: 90%;
+  max-width: 800px;
+  height: 400px;
+  margin: 30px auto;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+}
+
+/* Modales avec animation scale */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  animation: fadeInModal 0.3s;
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.modal-content {
+  background-color: #fff;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  text-align: center;
+  transform: scale(0.8);
+  animation: scaleIn 0.3s forwards;
+}
+@keyframes scaleIn {
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Modal de paiement spécifique */
+.payment-content .qr {
+  width: 150px; /* Taille moyenne */
+  height: 150px;
+  margin-bottom: 15px;
+}
+.payment-info {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.payment-info .price {
+  font-weight: bold;
+  color: var(--success);
+}
+
+/* Champs de formulaire */
+input[type="text"],
+input[type="number"],
+input[type="tel"] {
+  width: 100%;
+  padding: 10px;
+  margin: 8px 0;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Mode sombre */
+.dark-theme {
+  background: var(--dark-background);
+  color: var(--dark-text);
+}
+.dark-theme header,
+.dark-theme .sticky-nav,
+.dark-theme .modal-content {
+  background: #2a2a2a;
+  color: var(--dark-text);
+}
+.dark-theme .nav-links a {
+  color: var(--dark-text);
+}
+.dark-theme .modal {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-container {
+    flex-direction: column;
+    align-items: center;
+  }
+  .hero-content h2 {
+    font-size: 2rem;
+  }
+  .drivers-list {
+    flex-direction: column;
+    align-items: center;
+  }
+  .map-container {
+    width: 95%;
+    height: 300px;
+  }
+}
