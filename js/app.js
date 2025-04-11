@@ -3,8 +3,6 @@ let pendingDriver = {};
 let renewingDriverId = null;
 let map;
 let markers = [];
-
-// Variables pour la pagination
 let currentPage = 1;
 const itemsPerPage = 50;
 
@@ -166,15 +164,41 @@ function deleteDriver(id) {
 }
 
 /* ---------------------
-   Inscription et géolocalisation réelle via API Geolocation
+   Fonction pour obtenir la position la plus précise
 --------------------- */
-async function processRegistration() {
-  // Vérification de la connexion sécurisée (HTTPS) ou localhost
-  if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-    alert("La géolocalisation nécessite une connexion sécurisée (HTTPS).");
-    return;
-  }
+function getAccuratePosition(successCallback, errorCallback) {
+  let bestPosition = null;
+  const watchID = navigator.geolocation.watchPosition(
+    (position) => {
+      if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
+        bestPosition = position;
+      }
+      if (bestPosition.coords.accuracy <= 20) { // seuil de 20 mètres
+        navigator.geolocation.clearWatch(watchID);
+        successCallback(bestPosition);
+      }
+    },
+    (error) => {
+      console.error("Erreur de géolocalisation :", error);
+      errorCallback(error);
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+  // Après 20 secondes, on arrête le watch et retourne la meilleure position obtenue
+  setTimeout(() => {
+    navigator.geolocation.clearWatch(watchID);
+    if (bestPosition) {
+      successCallback(bestPosition);
+    } else {
+      errorCallback(new Error("Position imprécise ou non obtenue"));
+    }
+  }, 20000);
+}
 
+/* ---------------------
+   Inscription et géolocalisation
+--------------------- */
+function processRegistration() {
   pendingDriver = {
     name: document.getElementById('driverName').value.trim(),
     vehicle: document.getElementById('driverVehicle').value.trim(),
@@ -186,28 +210,23 @@ async function processRegistration() {
     alert("Veuillez remplir tous les champs.");
     return;
   }
-
   const fileInput = document.getElementById('driverPhoto');
   const file = fileInput && fileInput.files[0];
 
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
+    getAccuratePosition(
+      (position) => {
         const latitude = position.coords.latitude;
         const longitude = position.coords.longitude;
-        console.log("Localisation récupérée :", latitude, longitude);
         pendingDriver.location = [latitude, longitude];
 
-        // Recentrage de la carte sur la position réelle avec un zoom de 15
         if (map && typeof map.setView === 'function') {
           map.setView([latitude, longitude], 15);
         }
 
-        if (file) {
-          pendingDriver.photo = URL.createObjectURL(file);
-        } else {
-          pendingDriver.photo = 'https://via.placeholder.com/150';
-        }
+        pendingDriver.photo = file
+          ? URL.createObjectURL(file)
+          : 'https://via.placeholder.com/150';
 
         const expiration = new Date();
         expiration.setMonth(expiration.getMonth() + 1);
@@ -217,27 +236,21 @@ async function processRegistration() {
         showModal('paymentModal');
       },
       (error) => {
-        console.error("Erreur lors de la récupération de la position GPS :", error);
-        let message;
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            message = "Accès à la géolocalisation refusé. Veuillez autoriser l'accès à votre position dans votre navigateur.";
-            break;
-          case error.POSITION_UNAVAILABLE:
-            message = "Position non disponible. Veuillez vérifier vos paramètres GPS.";
-            break;
-          case error.TIMEOUT:
-            message = "La demande de géolocalisation a expiré. Veuillez réessayer.";
-            break;
-          default:
-            message = "Erreur inconnue lors de la récupération de la position.";
+        let message = "Erreur lors de la récupération de la position.";
+        if (error.code === error.PERMISSION_DENIED) {
+          message = "Accès à la géolocalisation refusé. Vérifiez vos paramètres d'autorisation.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Position non disponible. Vérifiez votre connexion GPS.";
+        } else if (error.code === error.TIMEOUT) {
+          message = "La demande de géolocalisation a expiré. Veuillez réessayer.";
+        } else {
+          message = error.message;
         }
         alert(message);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      }
     );
   } else {
-    alert("La géolocalisation n'est pas supportée par votre navigateur.");
+    alert("La géolocalisation n'est pas supportée par cet appareil.");
   }
 }
 
@@ -265,13 +278,13 @@ function confirmPayment() {
   saveToLocalStorage();
   updateDriversList();
   updateDashboard();
-  // Fermer la modal de paiement et masquer le QR code
   closeModal('paymentModal');
   showToast("Inscription réussie !");
+  plotDriversOnMap();
 }
 
 /* ---------------------
-   Ploter les livreurs sur la carte avec leur position réelle
+   Ploter les livreurs sur la carte
 --------------------- */
 function plotDriversOnMap() {
   markers.forEach(marker => map.removeLayer(marker));
@@ -291,9 +304,31 @@ function plotDriversOnMap() {
 }
 
 /* ---------------------
-   Initialisation
+   Initialisation à l'ouverture
 --------------------- */
 window.onload = () => {
   loadFromLocalStorage();
   initMap();
 };
+
+/* ---------------------
+   Prévisualisation de la photo
+--------------------- */
+const photoInput = document.getElementById('driverPhoto');
+const photoPreview = document.getElementById('photoPreview');
+if (photoInput) {
+  photoInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        photoPreview.src = e.target.result;
+        photoPreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      photoPreview.src = '#';
+      photoPreview.style.display = 'none';
+    }
+  });
+}
