@@ -208,7 +208,6 @@ input[type="text"] {
   margin: 6px 0;
   font-size: 0.95rem;
 }
-/* Icônes dans la carte du livreur */
 .driver-card .icon {
   margin-right: 5px;
   color: var(--secondary);
@@ -217,7 +216,6 @@ input[type="text"] {
   color: #f1c40f;
   font-size: 0.9rem;
 }
-/* Bouton de suppression */
 .delete-btn {
   position: absolute;
   top: 10px;
@@ -377,9 +375,7 @@ input[type="file"] {
   border: 1px solid #ccc;
   border-radius: 5px;
 }
-
-/* Label pour le champ fichier */
-.modal-content label[for="driverPhoto"] {
+label[for="driverPhoto"] {
   display: block;
   text-align: left;
   font-size: 0.9rem;
