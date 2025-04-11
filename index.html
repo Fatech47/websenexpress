@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SenExpress - Livraison Express</title>
-  <!-- Feuille de styles principale -->
+  <!-- Inclusion de la feuille de style CSS -->
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Leaflet CSS pour la carte -->
+  <!-- Inclusion de Leaflet CSS pour la carte -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- FontAwesome pour les icônes -->
+  <!-- Inclusion de FontAwesome pour les icônes -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
         integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
@@ -19,7 +19,7 @@
   <!-- En-tête -->
   <header role="banner">
     <div class="header-container">
-      <a href="index.html">
+      <a href="#">
         <img src="assets/logo.png" alt="Logo SenExpress" class="logo" />
       </a>
       <h1>SenExpress</h1>
@@ -86,7 +86,6 @@
         <div class="preview-container">
           <img id="photoPreview" class="profile-photo-preview" src="#" alt="Prévisualisation de la photo" style="display: none;" />
         </div>
-        <!-- Bouton d'inscription -->
         <button type="submit" class="action-btn">S'inscrire et Payer</button>
       </form>
     </div>
@@ -105,29 +104,9 @@
     </div>
   </div>
 
-  <!-- Inclusion de Leaflet JS et du script principal -->
+  <!-- Inclusion de Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- Inclusion du fichier JavaScript externe -->
   <script src="js/app.js"></script>
-  <!-- Script de prévisualisation de photo -->
-  <script>
-    const photoInput = document.getElementById('driverPhoto');
-    const photoPreview = document.getElementById('photoPreview');
-    if (photoInput) {
-      photoInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            photoPreview.src = e.target.result;
-            photoPreview.style.display = 'block';
-          };
-          reader.readAsDataURL(file);
-        } else {
-          photoPreview.src = '#';
-          photoPreview.style.display = 'none';
-        }
-      });
-    }
-  </script>
 </body>
 </html>
