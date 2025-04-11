@@ -7,7 +7,7 @@ let currentPage = 1;
 const itemsPerPage = 50;
 
 /* ---------------------
-   Toast
+   Toast de confirmation
 --------------------- */
 function showToast(message) {
   const toast = document.getElementById('toast');
@@ -20,15 +20,23 @@ function showToast(message) {
    Initialisation de la carte avec Leaflet
 --------------------- */
 function initMap() {
-  map = L.map('mapContainer').setView([14.6928, -17.4467], 12);
+  // Créer la carte dans l'élément "mapContainer"
+  map = L.map('mapContainer').setView([14.6928, -17.4467], 13); // Coordonnées de base
+
+  // Ajouter les tuiles OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
   }).addTo(map);
+
+  // Marqueur de test pour vérifier l'affichage
+  L.marker([14.6928, -17.4467]).addTo(map)
+    .bindPopup('Dakar - Centre ville')
+    .openPopup();
 }
 
 /* ---------------------
-   Modales
+   Gestion des modales
 --------------------- */
 function showModal(modalId) {
   const modal = document.getElementById(modalId);
@@ -40,7 +48,7 @@ function closeModal(modalId) {
 }
 
 /* ---------------------
-   Défilement fluide et thème
+   Défilement fluide et basculement de thème
 --------------------- */
 function scrollToSection(sectionId) {
   const section = document.getElementById(sectionId);
@@ -52,14 +60,16 @@ function toggleTheme() {
 document.getElementById('toggleTheme')?.addEventListener('click', toggleTheme);
 
 /* ---------------------
-   Local Storage
+   Stockage local (LocalStorage)
 --------------------- */
 function saveToLocalStorage() {
   localStorage.setItem('drivers', JSON.stringify(drivers));
 }
 function loadFromLocalStorage() {
   const storedDrivers = localStorage.getItem('drivers');
-  if (storedDrivers) drivers = JSON.parse(storedDrivers);
+  if (storedDrivers) {
+    drivers = JSON.parse(storedDrivers);
+  }
   updateDriversList();
   updateDashboard();
   plotDriversOnMap();
@@ -113,7 +123,9 @@ function updateDriversList(filter = '') {
   // Pagination
   const totalItems = filtered.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  if (currentPage > totalPages) currentPage = totalPages || 1;
+  if (currentPage > totalPages) {
+    currentPage = totalPages || 1;
+  }
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedDrivers = filtered.slice(startIndex, endIndex);
@@ -173,7 +185,8 @@ function getAccuratePosition(successCallback, errorCallback) {
       if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
         bestPosition = position;
       }
-      if (bestPosition.coords.accuracy <= 20) { // seuil de 20 mètres
+      // Arrêter dès qu'on atteint une précision satisfaisante (20 mètres)
+      if (bestPosition.coords.accuracy <= 20) {
         navigator.geolocation.clearWatch(watchID);
         successCallback(bestPosition);
       }
@@ -184,7 +197,7 @@ function getAccuratePosition(successCallback, errorCallback) {
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
-  // Après 20 secondes, on arrête le watch et retourne la meilleure position obtenue
+  // Après 10 secondes, arrêter le watch et renvoyer la meilleure position obtenue
   setTimeout(() => {
     navigator.geolocation.clearWatch(watchID);
     if (bestPosition) {
@@ -192,7 +205,7 @@ function getAccuratePosition(successCallback, errorCallback) {
     } else {
       errorCallback(new Error("Position imprécise ou non obtenue"));
     }
-  }, 20000);
+  }, 10000);
 }
 
 /* ---------------------
@@ -206,10 +219,12 @@ function processRegistration() {
     phone: document.getElementById('driverPhone').value.trim(),
     rating: 5
   };
+  
   if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone) {
     alert("Veuillez remplir tous les champs.");
     return;
   }
+  
   const fileInput = document.getElementById('driverPhoto');
   const file = fileInput && fileInput.files[0];
 
@@ -224,9 +239,7 @@ function processRegistration() {
           map.setView([latitude, longitude], 15);
         }
 
-        pendingDriver.photo = file
-          ? URL.createObjectURL(file)
-          : 'https://via.placeholder.com/150';
+        pendingDriver.photo = file ? URL.createObjectURL(file) : 'https://via.placeholder.com/150';
 
         const expiration = new Date();
         expiration.setMonth(expiration.getMonth() + 1);
@@ -258,6 +271,9 @@ function processRegistration() {
    Confirmation de paiement
 --------------------- */
 function confirmPayment() {
+  // Fermer immédiatement le modal de paiement
+  closeModal('paymentModal');
+
   if (renewingDriverId) {
     const driver = drivers.find(d => d.id === renewingDriverId);
     if (driver) {
@@ -270,17 +286,19 @@ function confirmPayment() {
       updateDashboard();
     }
     renewingDriverId = null;
-    closeModal('paymentModal');
     return;
   }
+  
   pendingDriver.id = Date.now();
   drivers.push({ ...pendingDriver });
   saveToLocalStorage();
   updateDriversList();
   updateDashboard();
-  closeModal('paymentModal');
   showToast("Inscription réussie !");
   plotDriversOnMap();
+
+  // Réinitialiser pendingDriver pour éviter la réutilisation sur une nouvelle inscription
+  pendingDriver = {};
 }
 
 /* ---------------------
