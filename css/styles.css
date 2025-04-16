@@ -10,6 +10,12 @@
   --danger: #e74c3c;
 }
 
+:root { /* variables et styles précédents */ }
+.filters { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 20px; }
+.filters input, .filters select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; }
+.driver-photo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+
+
 /* Reset et styles globaux */
 * {
   box-sizing: border-box;
@@ -164,7 +170,7 @@ input[type="text"] {
   background: var(--secondary);
   color: #fff;
   padding: 10px 20px;
-  margin-top: 20px;
+  margin-top: 10px;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -208,6 +214,7 @@ input[type="text"] {
   margin: 6px 0;
   font-size: 0.95rem;
 }
+/* Icônes dans la carte du livreur */
 .driver-card .icon {
   margin-right: 5px;
   color: var(--secondary);
@@ -216,6 +223,7 @@ input[type="text"] {
   color: #f1c40f;
   font-size: 0.9rem;
 }
+/* Bouton de suppression */
 .delete-btn {
   position: absolute;
   top: 10px;
@@ -288,23 +296,6 @@ input[type="text"] {
   border-radius: 10px;
 }
 
-/* Prévisualisation de la photo de profil */
-.profile-photo-preview {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  display: block;
-  margin: 10px auto;
-}
-
-/* Conteneur pour la prévisualisation */
-.preview-container {
-  max-height: 130px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-
 /* Modales avec animation scale */
 .modal {
   display: none;
@@ -348,7 +339,7 @@ input[type="text"] {
 
 /* Modal de paiement spécifique */
 .payment-content .qr {
-  width: 150px;
+  width: 150px; /* Taille moyenne */
   height: 150px;
   margin-bottom: 15px;
 }
@@ -367,20 +358,12 @@ input[type="text"] {
 /* Champs de formulaire */
 input[type="text"],
 input[type="number"],
-input[type="tel"],
-input[type="file"] {
+input[type="tel"] {
   width: 100%;
   padding: 10px;
   margin: 8px 0;
   border: 1px solid #ccc;
   border-radius: 5px;
-}
-label[for="driverPhoto"] {
-  display: block;
-  text-align: left;
-  font-size: 0.9rem;
-  color: var(--text-color);
-  margin-top: 10px;
 }
 
 /* Mode sombre */
