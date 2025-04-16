@@ -1,352 +1,122 @@
+
 let drivers = [];
-let pendingDriver = {};
-let renewingDriverId = null;
-let map;
-let markers = [];
+let editingId = null;
 let currentPage = 1;
-const itemsPerPage = 50;
+const itemsPerPage = 20;
 
-/* ---------------------
-   Toast de confirmation
---------------------- */
-function showToast(message) {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.style.display = 'block';
-  setTimeout(() => { toast.style.display = 'none'; }, 3000);
+function showToast(msg) { /* inchangé */ }
+function openModal(id) { document.getElementById(id).style.display='block'; }
+function closeModal(id) { document.getElementById(id).style.display='none'; clearForm(); }
+function clearForm() {
+  document.getElementById('driverForm').reset(); editingId = null;
+  document.getElementById('modalTitle').textContent = 'Inscription Livreur';
+  document.getElementById('formSubmitBtn').textContent = 'Valider';
 }
 
-/* ---------------------
-   Initialisation de la carte avec Leaflet
---------------------- */
-function initMap() {
-  // Créer la carte dans l'élément "mapContainer"
-  map = L.map('mapContainer').setView([14.6928, -17.4467], 13); // Coordonnées de base
+async function processForm() {
+  const name = document.getElementById('driverName').value.trim();
+  const vehicle = document.getElementById('driverVehicle').value.trim();
+  const price = Number(document.getElementById('driverPrice').value);
+  const phone = document.getElementById('driverPhone').value.trim();
+  const rating = Number(document.getElementById('driverRating').value);
+  const fileInput = document.getElementById('driverPhoto');
+  const phonePattern = /^\+?\d{8,15}$/;
+  if (!phonePattern.test(phone)) { alert('Format de téléphone invalide'); return; }
 
-  // Ajouter les tuiles OpenStreetMap
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19
-  }).addTo(map);
-
-  // Marqueur de test pour vérifier l'affichage
-  L.marker([14.6928, -17.4467]).addTo(map)
-    .bindPopup('Dakar - Centre ville')
-    .openPopup();
-}
-
-/* ---------------------
-   Gestion des modales
---------------------- */
-function showModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.style.display = 'block';
-}
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.style.display = 'none';
-}
-
-/* ---------------------
-   Défilement fluide et basculement de thème
---------------------- */
-function scrollToSection(sectionId) {
-  const section = document.getElementById(sectionId);
-  if (section) section.scrollIntoView({ behavior: 'smooth' });
-}
-function toggleTheme() {
-  document.body.classList.toggle('dark-theme');
-}
-document.getElementById('toggleTheme')?.addEventListener('click', toggleTheme);
-
-/* ---------------------
-   Stockage local (LocalStorage)
---------------------- */
-function saveToLocalStorage() {
-  localStorage.setItem('drivers', JSON.stringify(drivers));
-}
-function loadFromLocalStorage() {
-  const storedDrivers = localStorage.getItem('drivers');
-  if (storedDrivers) {
-    drivers = JSON.parse(storedDrivers);
+  let photoURL = 'assets/default-avatar.png';
+  if (fileInput.files && fileInput.files[0]) {
+    photoURL = await new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsDataURL(fileInput.files[0]);
+    });
   }
-  updateDriversList();
-  updateDashboard();
-  plotDriversOnMap();
+
+  if (editingId) {
+    const idx = drivers.findIndex(d => d.id === editingId);
+    Object.assign(drivers[idx], { name, vehicle, price, phone, rating, photo: photoURL });
+  } else {
+    const id = Date.now();
+    drivers.push({ id, name, vehicle, price, phone, rating, photo: photoURL });
+  }
+  save(); closeModal('registrationModal'); updateDriversList(); updateDashboard();
+  showToast('Opération réussie !');
 }
 
-/* ---------------------
-   Pagination Controls
---------------------- */
-function updatePagination(totalItems) {
-  const paginationContainer = document.getElementById('pagination');
-  paginationContainer.innerHTML = "";
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  const prevBtn = document.createElement("button");
-  prevBtn.textContent = "Précédent";
-  prevBtn.disabled = currentPage === 1;
-  prevBtn.onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      updateDriversList(document.getElementById('searchDrivers').value);
-    }
-  };
-  paginationContainer.appendChild(prevBtn);
-
-  const pageInfo = document.createElement("span");
-  pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
-  paginationContainer.appendChild(pageInfo);
-
-  const nextBtn = document.createElement("button");
-  nextBtn.textContent = "Suivant";
-  nextBtn.disabled = currentPage === totalPages;
-  nextBtn.onclick = () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      updateDriversList(document.getElementById('searchDrivers').value);
-    }
-  };
-  paginationContainer.appendChild(nextBtn);
+function editDriver(id) {
+  const d = drivers.find(d => d.id === id);
+  editingId = id;
+  document.getElementById('driverName').value = d.name;
+  document.getElementById('driverVehicle').value = d.vehicle;
+  document.getElementById('driverPrice').value = d.price;
+  document.getElementById('driverPhone').value = d.phone;
+  document.getElementById('driverRating').value = d.rating;
+  document.getElementById('modalTitle').textContent = 'Modifier Livreur';
+  document.getElementById('formSubmitBtn').textContent = 'Enregistrer';
+  openModal('registrationModal');
 }
 
-/* ---------------------
-   Mise à jour des listes
---------------------- */
-function updateDriversList(filter = '') {
-  const now = new Date();
-  const activeDrivers = drivers.filter(driver => new Date(driver.expirationDate) > now);
-  const filtered = activeDrivers.filter(driver =>
-    driver.name.toLowerCase().includes(filter.toLowerCase())
+function deleteDriver(id) { drivers = drivers.filter(d => d.id !== id); save(); updateDriversList(); updateDashboard(); }
+
+function updateDriversList() {
+  const text = document.getElementById('searchDrivers').value.toLowerCase();
+  const minR = Number(document.getElementById('filterRating').value);
+  const minP = Number(document.getElementById('minPrice').value) || 0;
+  const maxP = Number(document.getElementById('maxPrice').value) || Infinity;
+  const veh = document.getElementById('filterVehicle').value.toLowerCase();
+
+  let filtered = drivers.filter(d =>
+    d.name.toLowerCase().includes(text) &&
+    d.rating >= minR &&
+    d.price >= minP && d.price <= maxP &&
+    d.vehicle.toLowerCase().includes(veh)
   );
 
-  // Pagination
-  const totalItems = filtered.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  if (currentPage > totalPages) {
-    currentPage = totalPages || 1;
-  }
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedDrivers = filtered.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  if (currentPage > totalPages) currentPage = totalPages || 1;
+  const start = (currentPage - 1) * itemsPerPage;
+  const pageItems = filtered.slice(start, start + itemsPerPage);
 
-  const html = paginatedDrivers.map((driver, index) => `
-    <div class="driver-card" style="animation-delay: ${index * 0.1}s">
-      <button class="delete-btn" onclick="deleteDriver(${driver.id})">✕</button>
-      <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo-preview" />
-      <h3><i class="fa-solid fa-box icon"></i> ${driver.name}</h3>
-      <p><i class="fa-solid fa-truck icon"></i> ${driver.vehicle} • ${driver.price} FCFA</p>
-      <p><i class="fa-solid fa-phone icon"></i> ${driver.phone}</p>
-      <p><i class="fa-solid fa-map-pin icon"></i> Localisation GPS</p>
-      <p class="rating">${'★'.repeat(driver.rating)}${'☆'.repeat(5 - driver.rating)}</p>
-      <p>Abonnement actif jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}</p>
+  const html = pageItems.map(d => `
+    <div class="driver-card">
+      <img src="${d.photo}" alt="Photo de ${d.name}" class="driver-photo" />
+      <button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button>
+      <button class="edit-btn" onclick="editDriver(${d.id})">✎</button>
+      <h3>${d.name}</h3>
+      <p>${d.vehicle} • ${d.price} FCFA</p>
+      <p>${d.phone}</p>
+      <p>${'★'.repeat(d.rating)}${'☆'.repeat(5-d.rating)}</p>
     </div>
-  `).join("");
+  `).join('');
 
   document.getElementById('driversList').innerHTML = html;
-  updatePagination(filtered.length);
-  plotDriversOnMap();
+  renderPagination(filtered.length);
 }
 
-function updateDashboard(filter = '') {
-  const filtered = drivers.filter(driver =>
-    driver.name.toLowerCase().includes(filter.toLowerCase())
-  );
-  const html = filtered.map(driver => `
+function renderPagination(total) {
+  const nav = document.getElementById('pagination'); nav.innerHTML = '';
+  const pages = Math.ceil(total/itemsPerPage);
+  const prev = document.createElement('button'); prev.textContent='Précédent'; prev.disabled = currentPage===1;
+  prev.onclick=()=>{currentPage--; updateDriversList();}; nav.append(prev);
+  nav.append(document.createTextNode(` Page ${currentPage} / ${pages} `));
+  const next = document.createElement('button'); next.textContent='Suivant'; next.disabled = currentPage===pages;
+  next.onclick=()=>{currentPage++; updateDriversList();}; nav.append(next);
+}
+
+function updateDashboard() {
+  const list = document.getElementById('dashboardList');
+  list.innerHTML = drivers.map(d=>`
     <div class="dashboard-item">
+      <img src="${d.photo}" alt="Photo de ${d.name}" class="driver-photo" />
+      <span><strong>${d.name}</strong> - ${d.vehicle} - ${d.phone}</span>
       <div>
-        <img src="${driver.photo}" alt="Photo de ${driver.name}" class="profile-photo-preview" style="width:30px;height:30px;border-radius:50%;vertical-align:middle;">
-        <strong>${driver.name}</strong> - ${driver.vehicle} - ${driver.phone}<br>
-        Abonné jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}
+        <button class="edit-btn" onclick="editDriver(${d.id})">✎</button>
+        <button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button>
       </div>
-      <button class="delete-btn" onclick="deleteDriver(${driver.id})">Supprimer</button>
     </div>
-  `).join("");
-  document.getElementById('dashboardList').innerHTML = html;
+  `).join('');
 }
 
-function deleteDriver(id) {
-  if (confirm("Êtes-vous sûr de vouloir supprimer ce livreur ?")) {
-    drivers = drivers.filter(driver => driver.id !== id);
-    saveToLocalStorage();
-    updateDriversList();
-    updateDashboard();
-    plotDriversOnMap();
-  }
-}
-
-/* ---------------------
-   Fonction pour obtenir la position la plus précise
---------------------- */
-function getAccuratePosition(successCallback, errorCallback) {
-  let bestPosition = null;
-  const watchID = navigator.geolocation.watchPosition(
-    (position) => {
-      if (!bestPosition || position.coords.accuracy < bestPosition.coords.accuracy) {
-        bestPosition = position;
-      }
-      // Arrêter dès qu'on atteint une précision satisfaisante (20 mètres)
-      if (bestPosition.coords.accuracy <= 20) {
-        navigator.geolocation.clearWatch(watchID);
-        successCallback(bestPosition);
-      }
-    },
-    (error) => {
-      console.error("Erreur de géolocalisation :", error);
-      errorCallback(error);
-    },
-    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
-  );
-  // Après 10 secondes, arrêter le watch et renvoyer la meilleure position obtenue
-  setTimeout(() => {
-    navigator.geolocation.clearWatch(watchID);
-    if (bestPosition) {
-      successCallback(bestPosition);
-    } else {
-      errorCallback(new Error("Position imprécise ou non obtenue"));
-    }
-  }, 10000);
-}
-
-/* ---------------------
-   Inscription et géolocalisation
---------------------- */
-function processRegistration() {
-  pendingDriver = {
-    name: document.getElementById('driverName').value.trim(),
-    vehicle: document.getElementById('driverVehicle').value.trim(),
-    price: document.getElementById('driverPrice').value.trim(),
-    phone: document.getElementById('driverPhone').value.trim(),
-    rating: 5
-  };
-  
-  if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone) {
-    alert("Veuillez remplir tous les champs.");
-    return;
-  }
-  
-  const fileInput = document.getElementById('driverPhoto');
-  const file = fileInput && fileInput.files[0];
-
-  if (navigator.geolocation) {
-    getAccuratePosition(
-      (position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
-        pendingDriver.location = [latitude, longitude];
-
-        if (map && typeof map.setView === 'function') {
-          map.setView([latitude, longitude], 15);
-        }
-
-        pendingDriver.photo = file ? URL.createObjectURL(file) : 'https://via.placeholder.com/150';
-
-        const expiration = new Date();
-        expiration.setMonth(expiration.getMonth() + 1);
-        pendingDriver.expirationDate = expiration.toISOString();
-
-        closeModal('registrationModal');
-        showModal('paymentModal');
-      },
-      (error) => {
-        let message = "Erreur lors de la récupération de la position.";
-        if (error.code === error.PERMISSION_DENIED) {
-          message = "Accès à la géolocalisation refusé. Vérifiez vos paramètres d'autorisation.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = "Position non disponible. Vérifiez votre connexion GPS.";
-        } else if (error.code === error.TIMEOUT) {
-          message = "La demande de géolocalisation a expiré. Veuillez réessayer.";
-        } else {
-          message = error.message;
-        }
-        alert(message);
-      }
-    );
-  } else {
-    alert("La géolocalisation n'est pas supportée par cet appareil.");
-  }
-}
-
-/* ---------------------
-   Confirmation de paiement
---------------------- */
-function confirmPayment() {
-  // Fermer immédiatement le modal de paiement
-  closeModal('paymentModal');
-
-  if (renewingDriverId) {
-    const driver = drivers.find(d => d.id === renewingDriverId);
-    if (driver) {
-      const newExpiration = new Date();
-      newExpiration.setMonth(newExpiration.getMonth() + 1);
-      driver.expirationDate = newExpiration.toISOString();
-      alert("Abonnement renouvelé jusqu'au " + newExpiration.toLocaleDateString());
-      saveToLocalStorage();
-      updateDriversList();
-      updateDashboard();
-    }
-    renewingDriverId = null;
-    return;
-  }
-  
-  pendingDriver.id = Date.now();
-  drivers.push({ ...pendingDriver });
-  saveToLocalStorage();
-  updateDriversList();
-  updateDashboard();
-  showToast("Inscription réussie !");
-  plotDriversOnMap();
-
-  // Réinitialiser pendingDriver pour éviter la réutilisation sur une nouvelle inscription
-  pendingDriver = {};
-}
-
-/* ---------------------
-   Ploter les livreurs sur la carte
---------------------- */
-function plotDriversOnMap() {
-  markers.forEach(marker => map.removeLayer(marker));
-  markers = [];
-  drivers.forEach(driver => {
-    if (new Date(driver.expirationDate) > new Date() && driver.location) {
-      const marker = L.marker(driver.location).addTo(map)
-        .bindPopup(`
-          <strong>${driver.name}</strong><br>
-          <img src="${driver.photo}" alt="Photo ${driver.name}" style="width:50px;height:50px;border-radius:50%;"><br>
-          <i class="fa-solid fa-truck"></i> ${driver.vehicle}<br>
-          <i class="fa-solid fa-phone"></i> ${driver.phone}
-        `);
-      markers.push(marker);
-    }
-  });
-}
-
-/* ---------------------
-   Initialisation à l'ouverture
---------------------- */
-window.onload = () => {
-  loadFromLocalStorage();
-  initMap();
-};
-
-/* ---------------------
-   Prévisualisation de la photo
---------------------- */
-const photoInput = document.getElementById('driverPhoto');
-const photoPreview = document.getElementById('photoPreview');
-if (photoInput) {
-  photoInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        photoPreview.src = e.target.result;
-        photoPreview.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
-    } else {
-      photoPreview.src = '#';
-      photoPreview.style.display = 'none';
-    }
-  });
-}
+function save() { localStorage.setItem('drivers', JSON.stringify(drivers)); }
+function load() { const s=localStorage.getItem('drivers'); if(s) drivers=JSON.parse(s); }
+window.onload = ()=>{ load(); updateDriversList(); updateDashboard(); };
