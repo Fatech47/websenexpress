@@ -1,31 +1,27 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SenExpress - Livraison Express</title>
-  <!-- Inclusion de la feuille de style CSS -->
+  <!-- Feuille de styles principale -->
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- Inclusion de Leaflet CSS pour la carte -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <!-- Inclusion de FontAwesome pour les icônes -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
-        integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <!-- FontAwesome pour les icônes -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
   <!-- Toast de confirmation -->
-  <div id="toast" class="toast">Inscription réussie !</div>
+  <div id="toast" class="toast">Action réussie !</div>
 
   <!-- En-tête -->
   <header role="banner">
     <div class="header-container">
-      <a href="#">
-        <img src="assets/logo.png" alt="Logo SenExpress" class="logo" />
-      </a>
+      <a href="index.html"><img src="assets/logo.png" alt="Logo SenExpress" class="logo" /></a>
       <h1>SenExpress</h1>
-      <button id="toggleTheme" aria-label="Basculer entre le mode clair et sombre">
-        <span aria-hidden="true">🌓</span>
-      </button>
+      <button id="toggleTheme" aria-label="Basculer le thème"><span aria-hidden="true">🌓</span></button>
     </div>
   </header>
 
@@ -38,11 +34,11 @@
     </ul>
   </nav>
 
-  <!-- Section Héro -->
+  <!-- Hero -->
   <section id="homeSection" class="hero-section">
     <div class="hero-content">
       <h2>La livraison express réinventée</h2>
-      <p>Profitez de notre service rapide et fiable pour vos livraisons au quotidien.</p>
+      <p>Service rapide et fiable pour vos livraisons quotidiennes.</p>
       <button onclick="scrollToSection('livreursSection')">Voir nos livreurs</button>
     </div>
   </section>
@@ -50,63 +46,52 @@
   <!-- Section Livreurs -->
   <section id="livreursSection">
     <h2>Livreurs Disponibles</h2>
-    <!-- Barre de recherche -->
-    <input type="text" id="searchDrivers" placeholder="Rechercher un livreur…" oninput="updateDriversList(this.value)" />
-    <div id="driversList" class="drivers-list"></div>
-    <!-- Pagination -->
-    <div id="pagination" class="pagination"></div>
-    <div class="btn-container">
-      <button onclick="showModal('registrationModal')" class="action-btn">Devenir Livreur</button>
+    <div class="filters">
+      <input type="text" id="searchDrivers" placeholder="Nom du livreur…" oninput="updateDriversList()" />
+      <select id="filterRating" onchange="updateDriversList()">
+        <option value="0">Toutes notes</option>
+        <option value="5">5 étoiles</option>
+        <option value="4">4 étoiles & plus</option>
+        <option value="3">3 étoiles & plus</option>
+      </select>
+      <input type="number" id="minPrice" placeholder="Prix min" oninput="updateDriversList()" />
+      <input type="number" id="maxPrice" placeholder="Prix max" oninput="updateDriversList()" />
+      <input type="text" id="filterVehicle" placeholder="Véhicule…" oninput="updateDriversList()" />
     </div>
-    <!-- Conteneur de la Carte -->
-    <div id="mapContainer" class="map-container"></div>
+    <div id="driversList" class="drivers-list"></div>
+    <div id="pagination" class="pagination"></div>
+    <button onclick="openModal('registrationModal')" class="action-btn">Devenir Livreur</button>
   </section>
 
-  <!-- Section Tableau de bord -->
+  <!-- Dashboard -->
   <section id="dashboardSection">
-    <h2>Tableau de bord - Historique des livreurs</h2>
-    <input type="text" id="searchDashboard" placeholder="Rechercher dans l'historique…" oninput="updateDashboard(this.value)" />
+    <h2>Tableau de bord</h2>
     <div id="dashboardList" class="dashboard-list"></div>
   </section>
 
-  <!-- Modal d'inscription -->
-  <div id="registrationModal" class="modal" role="dialog" aria-modal="true">
-    <div class="modal-content animate-modal">
-      <span class="close-modal" onclick="closeModal('registrationModal')" aria-label="Fermer">&times;</span>
-      <h2>Inscription Livreur</h2>
-      <form id="driverForm" onsubmit="event.preventDefault(); processRegistration();">
-        <input type="text" id="driverName" placeholder="Nom complet" required />
-        <input type="text" id="driverVehicle" placeholder="Véhicule" required />
-        <input type="number" id="driverPrice" placeholder="Prix (FCFA)" required />
-        <input type="tel" id="driverPhone" placeholder="Téléphone" required />
-        <!-- Champ de fichier pour l'image de profil -->
-        <label for="driverPhoto">Photo de profil (optionnelle) :</label>
+  <!-- Modal Inscription / Édition -->
+  <div id="registrationModal" class="modal" aria-modal="true" role="dialog">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal('registrationModal')">&times;</span>
+      <h2 id="modalTitle">Inscription Livreur</h2>
+      <form id="driverForm" onsubmit="event.preventDefault(); processForm()">
+        <input type="text" id="driverName" placeholder="Nom complet" required minlength="3" />
+        <input type="text" id="driverVehicle" placeholder="Véhicule" required minlength="2" />
+        <input type="number" id="driverPrice" placeholder="Prix (FCFA)" required min="100" />
+        <input type="tel" id="driverPhone" placeholder="Téléphone" required pattern="^\+?\d{8,15}$" />
+        <select id="driverRating">
+          <option value="5">5 étoiles</option>
+          <option value="4">4 étoiles</option>
+          <option value="3">3 étoiles</option>
+          <option value="2">2 étoiles</option>
+          <option value="1">1 étoile</option>
+        </select>
         <input type="file" id="driverPhoto" accept="image/*" />
-        <!-- Conteneur pour la prévisualisation -->
-        <div class="preview-container">
-          <img id="photoPreview" class="profile-photo-preview" src="#" alt="Prévisualisation de la photo" style="display: none;" />
-        </div>
-        <button type="submit" class="action-btn">S'inscrire et Payer</button>
+        <button type="submit" class="action-btn" id="formSubmitBtn">Valider</button>
       </form>
     </div>
   </div>
 
-  <!-- Modal de paiement -->
-  <div id="paymentModal" class="modal" role="dialog" aria-modal="true">
-    <div class="modal-content animate-modal payment-content">
-      <span class="close-modal" onclick="closeModal('paymentModal')" aria-label="Fermer">&times;</span>
-      <img src="assets/wave_qr.png" alt="QR Code Paiement" class="qr" />
-      <div class="payment-info">
-        <span>Montant à payer :</span>
-        <span class="price">2000 FCFA</span>
-      </div>
-      <button onclick="confirmPayment()" class="action-btn">J'ai payé</button>
-    </div>
-  </div>
-
-  <!-- Inclusion de Leaflet JS -->
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Inclusion du fichier JavaScript externe -->
   <script src="js/app.js"></script>
 </body>
 </html>
