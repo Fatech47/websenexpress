@@ -1,122 +1,225 @@
-
 let drivers = [];
-let editingId = null;
+let pendingDriver = {};
+let renewingDriverId = null;
+
+// Pagination
 let currentPage = 1;
-const itemsPerPage = 20;
+const itemsPerPage = 50;
 
-function showToast(msg) { /* inchangé */ }
-function openModal(id) { document.getElementById(id).style.display='block'; }
-function closeModal(id) { document.getElementById(id).style.display='none'; clearForm(); }
-function clearForm() {
-  document.getElementById('driverForm').reset(); editingId = null;
-  document.getElementById('modalTitle').textContent = 'Inscription Livreur';
-  document.getElementById('formSubmitBtn').textContent = 'Valider';
+/* ---------------------
+   Toast
+--------------------- */
+function showToast(message) {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.style.display = 'block';
+  setTimeout(() => { toast.style.display = 'none'; }, 3000);
 }
 
-async function processForm() {
-  const name = document.getElementById('driverName').value.trim();
-  const vehicle = document.getElementById('driverVehicle').value.trim();
-  const price = Number(document.getElementById('driverPrice').value);
-  const phone = document.getElementById('driverPhone').value.trim();
-  const rating = Number(document.getElementById('driverRating').value);
-  const fileInput = document.getElementById('driverPhoto');
-  const phonePattern = /^\+?\d{8,15}$/;
-  if (!phonePattern.test(phone)) { alert('Format de téléphone invalide'); return; }
-
-  let photoURL = 'assets/default-avatar.png';
-  if (fileInput.files && fileInput.files[0]) {
-    photoURL = await new Promise(resolve => {
-      const reader = new FileReader();
-      reader.onload = e => resolve(e.target.result);
-      reader.readAsDataURL(fileInput.files[0]);
-    });
-  }
-
-  if (editingId) {
-    const idx = drivers.findIndex(d => d.id === editingId);
-    Object.assign(drivers[idx], { name, vehicle, price, phone, rating, photo: photoURL });
-  } else {
-    const id = Date.now();
-    drivers.push({ id, name, vehicle, price, phone, rating, photo: photoURL });
-  }
-  save(); closeModal('registrationModal'); updateDriversList(); updateDashboard();
-  showToast('Opération réussie !');
+/* ---------------------
+   Modales
+--------------------- */
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'block';
+}
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.style.display = 'none';
 }
 
-function editDriver(id) {
-  const d = drivers.find(d => d.id === id);
-  editingId = id;
-  document.getElementById('driverName').value = d.name;
-  document.getElementById('driverVehicle').value = d.vehicle;
-  document.getElementById('driverPrice').value = d.price;
-  document.getElementById('driverPhone').value = d.phone;
-  document.getElementById('driverRating').value = d.rating;
-  document.getElementById('modalTitle').textContent = 'Modifier Livreur';
-  document.getElementById('formSubmitBtn').textContent = 'Enregistrer';
-  openModal('registrationModal');
+/* ---------------------
+   Défilement fluide & thème
+--------------------- */
+function scrollToSection(sectionId) {
+  const section = document.getElementById(sectionId);
+  if (section) section.scrollIntoView({ behavior: 'smooth' });
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark-theme');
+}
+document.getElementById('toggleTheme')?.addEventListener('click', toggleTheme);
+
+/* ---------------------
+   Local Storage
+--------------------- */
+function saveToLocalStorage() {
+  localStorage.setItem('drivers', JSON.stringify(drivers));
+}
+function loadFromLocalStorage() {
+  const storedDrivers = localStorage.getItem('drivers');
+  if (storedDrivers) drivers = JSON.parse(storedDrivers);
+  updateDriversList();
+  updateDashboard();
 }
 
-function deleteDriver(id) { drivers = drivers.filter(d => d.id !== id); save(); updateDriversList(); updateDashboard(); }
+/* ---------------------
+   Pagination
+--------------------- */
+function updatePagination(totalItems) {
+  const paginationContainer = document.getElementById('pagination');
+  paginationContainer.innerHTML = "";
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-function updateDriversList() {
-  const text = document.getElementById('searchDrivers').value.toLowerCase();
-  const minR = Number(document.getElementById('filterRating').value);
-  const minP = Number(document.getElementById('minPrice').value) || 0;
-  const maxP = Number(document.getElementById('maxPrice').value) || Infinity;
-  const veh = document.getElementById('filterVehicle').value.toLowerCase();
+  const prevBtn = document.createElement("button");
+  prevBtn.textContent = "Précédent";
+  prevBtn.disabled = currentPage === 1;
+  prevBtn.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      updateDriversList(document.getElementById('searchDrivers').value);
+    }
+  };
+  paginationContainer.appendChild(prevBtn);
 
-  let filtered = drivers.filter(d =>
-    d.name.toLowerCase().includes(text) &&
-    d.rating >= minR &&
-    d.price >= minP && d.price <= maxP &&
-    d.vehicle.toLowerCase().includes(veh)
+  const pageInfo = document.createElement("span");
+  pageInfo.textContent = `Page ${currentPage} sur ${totalPages}`;
+  paginationContainer.appendChild(pageInfo);
+
+  const nextBtn = document.createElement("button");
+  nextBtn.textContent = "Suivant";
+  nextBtn.disabled = currentPage === totalPages;
+  nextBtn.onclick = () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      updateDriversList(document.getElementById('searchDrivers').value);
+    }
+  };
+  paginationContainer.appendChild(nextBtn);
+}
+
+/* ---------------------
+   Mise à jour des listes
+--------------------- */
+function updateDriversList(filter = '') {
+  const now = new Date();
+  const activeDrivers = drivers.filter(driver => new Date(driver.expirationDate) > now);
+  const filtered = activeDrivers.filter(driver =>
+    driver.name.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
   if (currentPage > totalPages) currentPage = totalPages || 1;
-  const start = (currentPage - 1) * itemsPerPage;
-  const pageItems = filtered.slice(start, start + itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedDrivers = filtered.slice(startIndex, endIndex);
 
-  const html = pageItems.map(d => `
-    <div class="driver-card">
-      <img src="${d.photo}" alt="Photo de ${d.name}" class="driver-photo" />
-      <button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button>
-      <button class="edit-btn" onclick="editDriver(${d.id})">✎</button>
-      <h3>${d.name}</h3>
-      <p>${d.vehicle} • ${d.price} FCFA</p>
-      <p>${d.phone}</p>
-      <p>${'★'.repeat(d.rating)}${'☆'.repeat(5-d.rating)}</p>
+  const html = paginatedDrivers.map((driver, index) => `
+    <div class="driver-card" style="animation-delay: ${index * 0.1}s">
+      <button class="delete-btn" onclick="deleteDriver(${driver.id})">✕</button>
+      <img src="${driver.photo || 'https://via.placeholder.com/150'}" alt="Photo de ${driver.name}" class="driver-photo">
+      <h3><i class="fa-solid fa-box icon"></i> ${driver.name}</h3>
+      <p><i class="fa-solid fa-truck icon"></i> ${driver.vehicle} • ${driver.price} FCFA</p>
+      <p><i class="fa-solid fa-phone icon"></i> ${driver.phone}</p>
+      <p><i class="fa-solid fa-location-dot icon"></i> ${driver.city}</p>
+      <p class="rating">${'★'.repeat(driver.rating)}${'☆'.repeat(5 - driver.rating)}</p>
+      <p>Abonnement actif jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}</p>
     </div>
-  `).join('');
+  `).join("");
 
   document.getElementById('driversList').innerHTML = html;
-  renderPagination(filtered.length);
+  updatePagination(filtered.length);
 }
 
-function renderPagination(total) {
-  const nav = document.getElementById('pagination'); nav.innerHTML = '';
-  const pages = Math.ceil(total/itemsPerPage);
-  const prev = document.createElement('button'); prev.textContent='Précédent'; prev.disabled = currentPage===1;
-  prev.onclick=()=>{currentPage--; updateDriversList();}; nav.append(prev);
-  nav.append(document.createTextNode(` Page ${currentPage} / ${pages} `));
-  const next = document.createElement('button'); next.textContent='Suivant'; next.disabled = currentPage===pages;
-  next.onclick=()=>{currentPage++; updateDriversList();}; nav.append(next);
-}
-
-function updateDashboard() {
-  const list = document.getElementById('dashboardList');
-  list.innerHTML = drivers.map(d=>`
+function updateDashboard(filter = '') {
+  const filtered = drivers.filter(driver =>
+    driver.name.toLowerCase().includes(filter.toLowerCase())
+  );
+  const html = filtered.map(driver => `
     <div class="dashboard-item">
-      <img src="${d.photo}" alt="Photo de ${d.name}" class="driver-photo" />
-      <span><strong>${d.name}</strong> - ${d.vehicle} - ${d.phone}</span>
       <div>
-        <button class="edit-btn" onclick="editDriver(${d.id})">✎</button>
-        <button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button>
+        <strong>${driver.name}</strong> - ${driver.vehicle} - ${driver.phone} - ${driver.city}<br>
+        Abonné jusqu'au ${new Date(driver.expirationDate).toLocaleDateString()}
       </div>
+      <button class="delete-btn" onclick="deleteDriver(${driver.id})">Supprimer</button>
     </div>
-  `).join('');
+  `).join("");
+  document.getElementById('dashboardList').innerHTML = html;
 }
 
-function save() { localStorage.setItem('drivers', JSON.stringify(drivers)); }
-function load() { const s=localStorage.getItem('drivers'); if(s) drivers=JSON.parse(s); }
-window.onload = ()=>{ load(); updateDriversList(); updateDashboard(); };
+function deleteDriver(id) {
+  if (confirm("Êtes-vous sûr de vouloir supprimer ce livreur ?")) {
+    drivers = drivers.filter(driver => driver.id !== id);
+    saveToLocalStorage();
+    updateDriversList();
+    updateDashboard();
+  }
+}
+
+/* ---------------------
+   Inscription (avec image du livreur)
+--------------------- */
+async function processRegistration() {
+  try {
+    pendingDriver = {
+      name: document.getElementById('driverName').value.trim(),
+      vehicle: document.getElementById('driverVehicle').value.trim(),
+      price: document.getElementById('driverPrice').value.trim(),
+      phone: document.getElementById('driverPhone').value.trim(),
+      city: document.getElementById('driverCity').value.trim(),
+      rating: 5
+    };
+
+    if (!pendingDriver.name || !pendingDriver.vehicle || !pendingDriver.price || !pendingDriver.phone || !pendingDriver.city) {
+      alert("Veuillez remplir tous les champs.");
+      return;
+    }
+
+    const fileInput = document.getElementById('driverImage');
+    const file = fileInput.files[0];
+
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = function () {
+        pendingDriver.photo = reader.result;
+        const expiration = new Date();
+        expiration.setMonth(expiration.getMonth() + 1);
+        pendingDriver.expirationDate = expiration.toISOString();
+        closeModal('registrationModal');
+        showModal('paymentModal');
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert("Veuillez télécharger une photo.");
+    }
+  } catch (error) {
+    console.error("Erreur d'inscription :", error);
+  }
+}
+
+/* ---------------------
+   Paiement
+--------------------- */
+function confirmPayment() {
+  if (renewingDriverId) {
+    const driver = drivers.find(d => d.id === renewingDriverId);
+    if (driver) {
+      const newExpiration = new Date();
+      newExpiration.setMonth(newExpiration.getMonth() + 1);
+      driver.expirationDate = newExpiration.toISOString();
+      alert("Abonnement renouvelé jusqu'au " + newExpiration.toLocaleDateString());
+      saveToLocalStorage();
+      updateDriversList();
+      updateDashboard();
+    }
+    renewingDriverId = null;
+    closeModal('paymentModal');
+    return;
+  }
+
+  pendingDriver.id = Date.now();
+  drivers.push({ ...pendingDriver });
+  saveToLocalStorage();
+  updateDriversList();
+  updateDashboard();
+  closeModal('paymentModal');
+  showToast("Inscription réussie !");
+}
+
+/* ---------------------
+   Initialisation
+--------------------- */
+window.onload = () => {
+  loadFromLocalStorage();
+};
