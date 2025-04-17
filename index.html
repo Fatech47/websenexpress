@@ -1,32 +1,32 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SenExpress - Livraison Express</title>
-  <!-- Feuille de styles principale -->
   <link rel="stylesheet" href="css/styles.css" />
-  <!-- FontAwesome pour les icônes -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-        integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag=="
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+        integrity="sha512-papNMUS1zfKxQgh4GQ4pFKq+6/9+zC6jqb6eRHi8/bsK2m+Q3iRR6ZtiE1O3O6kyo8+RiKxR+UA3Ej4Vf8X+ag==" 
         crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body>
+
   <!-- Toast de confirmation -->
-  <div id="toast" class="toast">Action réussie !</div>
+  <div id="toast" class="toast">Inscription réussie !</div>
 
   <!-- En-tête -->
-  <header role="banner">
+  <header>
     <div class="header-container">
-      <a href="index.html"><img src="assets/logo.png" alt="Logo SenExpress" class="logo" /></a>
+      <a href="index.html">
+        <img src="assets/logo.png" alt="Logo SenExpress" class="logo" />
+      </a>
       <h1>SenExpress</h1>
-      <button id="toggleTheme" aria-label="Basculer le thème"><span aria-hidden="true">🌓</span></button>
+      <button id="toggleTheme" aria-label="Basculer le thème">🌓</button>
     </div>
   </header>
 
   <!-- Navigation -->
-  <nav class="sticky-nav" role="navigation" aria-label="Navigation principale">
+  <nav class="sticky-nav">
     <ul class="nav-links">
       <li><a href="#homeSection">Accueil</a></li>
       <li><a href="#livreursSection">Livreurs</a></li>
@@ -34,11 +34,11 @@
     </ul>
   </nav>
 
-  <!-- Hero -->
+  <!-- Section Héro -->
   <section id="homeSection" class="hero-section">
     <div class="hero-content">
       <h2>La livraison express réinventée</h2>
-      <p>Service rapide et fiable pour vos livraisons quotidiennes.</p>
+      <p>Profitez de notre service rapide et fiable pour vos livraisons au quotidien.</p>
       <button onclick="scrollToSection('livreursSection')">Voir nos livreurs</button>
     </div>
   </section>
@@ -46,52 +46,63 @@
   <!-- Section Livreurs -->
   <section id="livreursSection">
     <h2>Livreurs Disponibles</h2>
-    <div class="filters">
-      <input type="text" id="searchDrivers" placeholder="Nom du livreur…" oninput="updateDriversList()" />
-      <select id="filterRating" onchange="updateDriversList()">
-        <option value="0">Toutes notes</option>
-        <option value="5">5 étoiles</option>
-        <option value="4">4 étoiles & plus</option>
-        <option value="3">3 étoiles & plus</option>
-      </select>
-      <input type="number" id="minPrice" placeholder="Prix min" oninput="updateDriversList()" />
-      <input type="number" id="maxPrice" placeholder="Prix max" oninput="updateDriversList()" />
-      <input type="text" id="filterVehicle" placeholder="Véhicule…" oninput="updateDriversList()" />
-    </div>
+    <input type="text" id="searchDrivers" placeholder="Rechercher un livreur…" oninput="updateDriversList(this.value)" />
     <div id="driversList" class="drivers-list"></div>
     <div id="pagination" class="pagination"></div>
-    <button onclick="openModal('registrationModal')" class="action-btn">Devenir Livreur</button>
+    <div class="btn-container">
+      <button onclick="showModal('registrationModal')" class="action-btn">Devenir Livreur</button>
+    </div>
   </section>
 
-  <!-- Dashboard -->
+  <!-- Tableau de bord -->
   <section id="dashboardSection">
-    <h2>Tableau de bord</h2>
+    <h2>Tableau de bord - Historique des livreurs</h2>
+    <div class="profile-info">
+      <img src="assets/profile-placeholder.jpg" alt="Photo de profil" class="profile-photo" />
+      <span class="profile-name">Nom de l'utilisateur</span>
+      <span class="profile-city">Ville: Dakar</span>
+      <i class="fas fa-map-marker-alt"></i>
+    </div>
+    <input type="text" id="searchDashboard" placeholder="Rechercher dans l'historique…" oninput="updateDashboard(this.value)" />
     <div id="dashboardList" class="dashboard-list"></div>
   </section>
 
-  <!-- Modal Inscription / Édition -->
-  <div id="registrationModal" class="modal" aria-modal="true" role="dialog">
-    <div class="modal-content">
+  <!-- Modal d'inscription -->
+  <div id="registrationModal" class="modal">
+    <div class="modal-content animate-modal">
       <span class="close-modal" onclick="closeModal('registrationModal')">&times;</span>
-      <h2 id="modalTitle">Inscription Livreur</h2>
-      <form id="driverForm" onsubmit="event.preventDefault(); processForm()">
-        <input type="text" id="driverName" placeholder="Nom complet" required minlength="3" />
-        <input type="text" id="driverVehicle" placeholder="Véhicule" required minlength="2" />
-        <input type="number" id="driverPrice" placeholder="Prix (FCFA)" required min="100" />
-        <input type="tel" id="driverPhone" placeholder="Téléphone" required pattern="^\+?\d{8,15}$" />
-        <select id="driverRating">
-          <option value="5">5 étoiles</option>
-          <option value="4">4 étoiles</option>
-          <option value="3">3 étoiles</option>
-          <option value="2">2 étoiles</option>
-          <option value="1">1 étoile</option>
-        </select>
-        <input type="file" id="driverPhoto" accept="image/*" />
-        <button type="submit" class="action-btn" id="formSubmitBtn">Valider</button>
+      <h2>Inscription Livreur</h2>
+      <form id="driverForm" onsubmit="event.preventDefault(); processRegistration();">
+        <input type="text" id="driverName" placeholder="Nom complet" required />
+        <input type="text" id="driverVehicle" placeholder="Véhicule" required />
+        <input type="number" id="driverPrice" placeholder="Prix (FCFA)" required />
+        <input type="tel" id="driverPhone" placeholder="Téléphone" required />
+        <input type="text" id="driverCity" placeholder="Ville" required />
+        <div>
+          <label for="driverImage">Photo du livreur</label>
+          <input type="file" id="driverImage" accept="image/*" />
+        </div>
+        <button type="submit" class="action-btn">S'inscrire et Payer</button>
       </form>
     </div>
   </div>
 
+  <!-- Modal de paiement -->
+  <div id="paymentModal" class="modal">
+    <div class="modal-content animate-modal payment-content">
+      <span class="close-modal" onclick="closeModal('paymentModal')">&times;</span>
+      <img src="assets/wave_qr.png" alt="QR Code Paiement" class="qr" />
+      <div class="payment-info">
+        <span>Montant à payer :</span>
+        <span class="price">2000 FCFA</span>
+      </div>
+      <button onclick="confirmPayment()" class="action-btn">J'ai payé</button>
+    </div>
+  </div>
+
+  <!-- Script principal -->
   <script src="js/app.js"></script>
+
 </body>
 </html>
+
